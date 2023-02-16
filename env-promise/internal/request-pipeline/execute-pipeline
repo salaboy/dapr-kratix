@@ -4,12 +4,11 @@ set -x
 
 # Read current values from the provided resource request
 export name="$(yq eval '.metadata.name' /input/object.yaml)"
-export size="$(yq eval '.spec.size' /input/object.yaml)"
+export statestore="$(yq eval '.spec.statestoreName' /input/object.yaml)"
 
 # Replace defaults with user provided values
 cat /tmp/transfer/redis-instance.yaml |  \
-  yq eval '.metadata.name = env(name)' | \
-  yq eval '.spec.size = env(size)' - \
+  yq eval '.metadata.name = env(name)' - \
   > /output/redis-instance.yaml
 
 
@@ -17,14 +16,33 @@ cat > /output/component.yaml <<EOF
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: statestore
+  name: ${statestore}
   namespace: default
 spec:
   type: state.redis
   version: v1
   metadata:
   - name: redisHost
-    value: rfs-${name}.default.svc.cluster.local:26379
+    value: redis-${name}.default.svc.cluster.local:6379
   - name: redisPassword
     value: ""
+EOF
+
+cat > /output/service.yaml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-${name}
+  namespace: default
+spec:
+  ports:
+  - name: redis
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: ${name}
+    app.kubernetes.io/part-of: redis-failover
+  type: ClusterIP
 EOF

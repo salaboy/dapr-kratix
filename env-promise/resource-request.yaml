@@ -4,4 +4,4 @@ metadata:
   name: example
   namespace: default
 spec:
-  size: small
+  statestoreName: "statestore"

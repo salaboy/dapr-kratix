@@ -5141,11 +5141,9 @@ spec:
             properties:
               spec:
                 properties:
-                  size:
-                    default: small
+                  statestoreName:
                     description: |
-                      Size of this env deployment. If small, it deploy redis with a single replica; if large, deploy redis with 3 replicas.
-                    pattern: ^(small|large)$
+                      The name of the statestore component to create
                     type: string
                 type: object
             type: object
