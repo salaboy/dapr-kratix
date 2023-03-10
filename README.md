@@ -8,7 +8,7 @@ The main objective is to request new development environments for our applicatio
 We will be using a Kubernetes KinD Cluster to run Kratix and configure our development environments. You can create a KinD Cluster by running: 
 
 ```
-kind create cluster --name platform
+kind create cluster --name platform --image kindest/node:v1.24.7
 ```
 
 Then we install Kratix into the cluster by following their getting started guide: https://kratix.io/docs/main/quick-start
