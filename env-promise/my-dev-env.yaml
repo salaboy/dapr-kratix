@@ -1,5 +1,5 @@
 apiVersion: marketplace.kratix.io/v1alpha1
-kind: env
+kind: my-dev-env
 metadata:
   name: example
   namespace: default
