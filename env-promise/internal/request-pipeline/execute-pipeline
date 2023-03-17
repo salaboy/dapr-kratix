@@ -4,7 +4,17 @@ set -x
 
 # Read current values from the provided resource request
 export name="$(yq eval '.metadata.name' /input/object.yaml)"
-export statestore="$(yq eval '.spec.statestoreName' /input/object.yaml)"
+export statestore="$(yq eval '.spec.database.statestoreName' /input/object.yaml)"
+export databaseEnabled="$(yq eval '.spec.database.enabled' /input/object.yaml)"
+export deployApp="$(yq eval '.spec.deployApp' /input/object.yaml)"
+
+if [ "$deployApp" = true ] ; then
+  sed "s/statestore/${statestore}/g" /tmp/transfer/apps.yaml > /output/apps.yaml
+fi 
+
+if [ "$databaseEnabled" = false ] ; then
+  exit 0
+fi 
 
 # Replace defaults with user provided values
 cat /tmp/transfer/redis-instance.yaml |  \
