@@ -30,6 +30,68 @@ For this example, we want a developer environment to have Dapr installed, Redis 
 For that we create a new Kratix promise that installs the Dapr and Redis promise and defines our Dapr Statestore Component configuration to point to the installed Redis instance.
 
 ```env-promise/promise.yaml
+apiVersion: platform.kratix.io/v1alpha1
+kind: Promise
+metadata:
+  name: env
+  namespace: default
+spec:
+  workerClusterResources:
+  - apiVersion: platform.kratix.io/v1alpha1
+    kind: Promise
+    metadata:
+      creationTimestamp: null
+      name: dapr
+      namespace: default
+    ...
+  - apiVersion: platform.kratix.io/v1alpha1
+    kind: Promise
+    metadata:
+      creationTimestamp: null
+      name: redis
+      namespace: default
+    ...
+  xaasCrd:
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: env.marketplace.kratix.io
+    spec:
+      group: marketplace.kratix.io
+      names:
+        kind: env
+        plural: env
+        singular: env
+      scope: Namespaced
+      versions:
+      - name: v1alpha1
+        schema:
+          openAPIV3Schema:
+            properties:
+              spec:
+                properties:
+                  deployApp:
+                    description: |
+                      Deploy the Dapr Applications defined
+                    type: boolean
+                  database:
+                    properties: 
+                      statestoreName:
+                        description: |
+                          The name of the statestore component to create
+                        type: string
+                      enabled:
+                        description: |
+                          Deploy an instance of Redis or not
+                        type: boolean
+                    type: object
+                type: object
+            type: object
+        served: true
+        storage: true
+  xaasRequestPipeline:
+  - salaboy/environment-request-pipeline:v0.1.0
+
 ```
 
 Then we apply this promise to the cluster.
@@ -46,13 +108,24 @@ the Redis operator.
 
 Now that we have our promise installed in Kratix we can create new development environments by sending the following resource:
 
-```env-promise/resource-request.yaml
+```env-promise/my-dev-env.yaml
+apiVersion: marketplace.kratix.io/v1alpha1
+kind: env
+metadata:
+  name: my-dev-env
+  namespace: default
+spec:
+  deployApp: true
+  database:   
+    enabled: true
+    statestoreName: "statestore"
+
 ```
 
-Then we then make this request to the Platform cluster:
+Then we then make a new Development Environment request to the Platform cluster:
 
 ```bash
-kubectl apply -f env-promise/resource-request.yaml
+kubectl apply -f env-promise/my-dev-env.yaml
 ```
 
 Now if we inspect the cluster we will see we have a Redis instance running, and
@@ -87,3 +160,9 @@ curl http://localhost:8080/order
 ```
 
 
+# Cleaning up
+
+You can delete your KinD Cluster to clean up all the installed components: 
+```
+kind delete clusters platform
+```
