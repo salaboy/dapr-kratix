@@ -138,27 +138,63 @@ kubectl get pods
 kubectl get components
 ```
 
-Lets test this out by deploying our example node app:
+You should see something like this: 
+
 ```
-kubectl apply -f node-app.yaml
 ```
 
-Port forward to it:
+# Interacting with the deployed applications
+
+Now that the applications are running we can use `kubect port-forward` to interact with both applications. 
+
+In a separate terminal run: 
 ```
-kubectl port-forward service/nodeapp 8080:80
+kubectl port-forward svc/java-app 8080:80
 ```
 
-Lets put some state into our app:
+In another terminal run: 
+
 ```
-curl --request POST --data "@sample.json" --header Content-Type:application/json http://localhost:8080/neworder
+kubectl port-forward svc/go-app 8081:80
 ```
 
-And lets see that the app successfully stores the state for order using our Dapr
-Statestore:
+Let's send an HTTP POST request to the Java App that writes to the Dapr Statestore component which is backed up by the Redis instance that the Kratix promise created and configured.
+
 ```
-curl http://localhost:8080/order
+curl -X POST localhost:8080/?value=42
 ```
 
+You should see something like this: 
+```
+```
+
+Let's now send a GET request to the Go App which reads from the same Dapr Statestore component: 
+
+```
+curl localhost:8081
+```
+
+You should see something like this: 
+
+```
+```
+
+You can find the source code of this application here: 
+- Java App: check [here]() to see how the Dapr Java SDK is being used to connect to the Statestore by just using the statestore name. Notice that the name used is the same as the name of the Dapr component listed by running `kubectl get components`
+- Go App: check [here]() to see how the Dapr Go SDK is being used to connect to the Dapr Statestore component.
+
+The same principles can be used to expand this demo to use the Pub/Sub component to exchange message between applciations written in different languages, without pushing the applications to know which backing implementation is being used. This allow the application code to work across different implementaitons and even across cloud providers.
+
+
+# Developing from Source
+
+If you are working with this example, and you want to change the Kratix Pipeline you can find it in the `internal/request-pipeline` directory. You can build the pipeline into a container image by running, from within the `internal/scripts` directory: 
+
+```
+./pipeline-image build push
+```
+
+You can push your own version under your own registry, but remember to change this into the `promise.yaml` file, which makes reference to the pipeline container image that is going to be used by the Kratix Promise. 
 
 # Cleaning up
 
